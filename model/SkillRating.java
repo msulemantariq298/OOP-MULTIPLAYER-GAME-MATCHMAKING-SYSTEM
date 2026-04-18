@@ -1,3 +1,13 @@
+/*
+ -> SkillRating.java
+ -> Author: Muhammad Suleman Tariq (543505)
+ 
+ -> This class implements the Elo rating system for player skill ratings.
+    It handles rating updates based on match outcomes, bounds checking,
+    and skill range validation for matchmaking. Uses standard Elo formula
+    with configurable k-factor and rating limits.
+ */
+
 package model;
 
 public class SkillRating {

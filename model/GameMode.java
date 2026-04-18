@@ -1,3 +1,13 @@
+/*
+ -> GameMode.java
+ -> Author: Muhammad Suleman Tariq (543505)
+ 
+ -> This abstract class defines the structure for different game modes
+    in the matchmaking system. It provides common properties like
+    mode name, player limits, skill tolerance, and rating settings.
+    Each concrete mode must implement applyMatchRules() method.
+ */
+
 package model;
 
 public abstract class GameMode {

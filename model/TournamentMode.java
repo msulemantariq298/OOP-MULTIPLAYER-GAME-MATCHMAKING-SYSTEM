@@ -1,3 +1,13 @@
+/*
+ -> TournamentMode.java
+ -> Author: Muhammad Suleman Tariq (543505)
+ 
+ -> This class implements tournament game mode for competitive play.
+    Tournament mode manages bracket-based matches with power-of-2
+    player requirements, strict skill balancing, and higher
+    reputation thresholds for tournament eligibility.
+ */
+
 package model;
 
 public class TournamentMode extends GameMode {
