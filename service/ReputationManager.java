@@ -17,11 +17,7 @@ public class ReputationManager {
     // minimum score needed to play normally
     private int minimumReputationScore;
 
-<<<<<<< HEAD
     // points deducted from a player each time they are reported
-=======
-    // Points deducted from a player each time they are reported
->>>>>>> 67cb59525e080eef821cb5194d709162475e6c0c
     private int deductionPerReport;
 
     // Constructor, gets the minimum reputation score   
@@ -69,7 +65,7 @@ public class ReputationManager {
             return false;
         }
 
-        // Step 1: Check if the second player has acceptable reputation
+        // Step 2: Check if the second player has acceptable reputation
         if (isBelowThreshold(p2)) {
             System.out.println("WARNING: " + p2.getUsername()
                     + " has low reputation (" + p2.getReputationScore()
@@ -91,12 +87,7 @@ public class ReputationManager {
 
     // Prints a warning when a player gets flagged for low reputation
     private void flagPlayer(Player p) {
-        System.out.println("\n*** WARNING! *** : " + p.getUsername()
-<<<<<<< HEAD
-                + " has been restricted due to low reputation!");
-=======
-                + "' has been restricted due to low reputation!");
->>>>>>> 67cb59525e080eef821cb5194d709162475e6c0c
+        System.out.println("\n*** WARNING! *** : " + p.getUsername() + " has been restricted due to low reputation!");
         System.out.println("  Current Score : " + p.getReputationScore());
         System.out.println("  Minimum Score : " + minimumReputationScore);
         System.out.println("  Status        : Restricted from normal matchmaking.");

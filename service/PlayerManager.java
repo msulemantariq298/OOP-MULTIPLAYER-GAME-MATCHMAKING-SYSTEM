@@ -7,18 +7,7 @@
     and looking up player profiles.
  */
 
-/*
- -> PlayerManager.java
- -> Author: Muhammad Talha Asif (576751)
- 
- -> This class manages all player accounts in the matchmaking system.
-    It handles registering new players, logging in, logging out,
-    and looking up player profiles.
- */
-
 package service;
-
-import model.Player;
 
 import model.Player;
 
