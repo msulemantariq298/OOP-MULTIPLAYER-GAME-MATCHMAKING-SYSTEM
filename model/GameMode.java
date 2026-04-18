@@ -1,11 +1,11 @@
 package model;
 
 public abstract class GameMode {
-    private String modeName;
-    private int minPlayers;
-    private int maxPlayers;
-    private double skillTolerance;
-    private boolean ratingEnabled;
+    protected String modeName;
+    protected int minPlayers;
+    protected int maxPlayers;
+    protected double skillTolerance;
+    protected boolean ratingEnabled;
 
 
     public GameMode(String name, int minP, int maxP) {
