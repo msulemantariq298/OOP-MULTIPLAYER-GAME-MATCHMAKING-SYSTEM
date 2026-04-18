@@ -130,6 +130,6 @@ public class PlayerManager {
         for (int i = 0; i < playerCount; i++) {
             System.out.println("  -> " + players[i].toString());
         }
-        System.out.println("<====================================================>\n");
+        System.out.println("<===================================================>\n");
     }
 }
