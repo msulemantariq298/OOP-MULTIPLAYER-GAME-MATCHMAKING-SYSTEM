@@ -1,3 +1,13 @@
+/*
+ -> CasualMode.java
+ -> Author: Muhammad Suleman Tariq (543505)
+ 
+ -> This class implements casual game mode for matchmaking.
+    Casual mode has relaxed skill matching, supports quick match,
+    and does not affect player ratings. Allows 1-10 players
+    with wider skill tolerance than other modes.
+ */
+
 package model;
 
 public class CasualMode extends GameMode {
