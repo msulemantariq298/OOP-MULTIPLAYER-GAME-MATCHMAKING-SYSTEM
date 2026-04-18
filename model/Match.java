@@ -1,3 +1,13 @@
+/*
+ -> Match.java
+ -> Author: Muhammad Suleman Tariq (543505)
+ 
+ -> This class represents a match between players in the matchmaking system.
+    It stores match information including players, game mode, status,
+    timestamps, and winner. Matches can be started, ended, and
+    their duration can be calculated.
+ */
+
 package model;
 
 import java.util.List;

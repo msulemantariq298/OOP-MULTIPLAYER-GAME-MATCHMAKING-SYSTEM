@@ -1,3 +1,13 @@
+/*
+ -> RankedMode.java
+ -> Author: Muhammad Suleman Tariq (543505)
+ 
+ -> This class implements ranked game mode for competitive matchmaking.
+    Ranked mode enforces strict 1v1 matches, requires minimum
+    reputation scores, and uses skill-based matching. Players must
+    complete placement matches and maintain good reputation.
+ */
+
 package model;
 
 public class RankedMode extends GameMode {

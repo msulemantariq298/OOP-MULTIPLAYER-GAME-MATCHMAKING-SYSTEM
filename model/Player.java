@@ -1,3 +1,13 @@
+/*
+ -> Player.java
+ -> Author: Muhammad Suleman Tariq (543505)
+ 
+ -> This class represents a player in the matchmaking system.
+    It stores player information including username, region, language,
+    statistics (wins/losses), reputation score, and skill rating.
+    Players can update their stats after matches and report other players.
+ */
+
 package model;
 
 public class Player {
