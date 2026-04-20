@@ -184,6 +184,48 @@ public class FileStorageManager {
         }
     }
 
+    public boolean updatePlayer(Player player) {
+        if (player == null) {
+            System.err.println("Cannot update null player");
+            return false;
+        }
+        try {
+            List<Player> players = loadAllPlayers();
+            boolean found = false;
+            for (int i = 0; i < players.size(); i++) {
+                if (players.get(i) != null && players.get(i).getUsername().equals(player.getUsername())) {
+                    players.set(i, player);
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                players.add(player);
+            }
+            
+            File file = new File(playersFile);
+            if (file.exists() && !file.delete()) {
+                System.err.println("Failed to delete existing players file");
+                return false;
+            }
+            
+            FileOutputStream fos = new FileOutputStream(playersFile);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            for (Player p : players) {
+                if (p != null) {
+                    oos.writeObject(p);
+                }
+            }
+            oos.close();
+            fos.close();
+            return true;
+        } catch (IOException e) {
+            System.err.println("Error updating player: " + e.getMessage());
+            return false;
+        }
+    }
+
     public boolean clearAllData() {
         try {
             File playersData = new File(playersFile);

@@ -6,10 +6,18 @@ import java.util.*;
 public class MatchHistory {
     private List<Match> allMatches;
     private Map<String, List<Match>> playerMatchHistory;
+    private FileStorageManager storageManager;
 
     public MatchHistory() {
         this.allMatches = new ArrayList<>();
         this.playerMatchHistory = new HashMap<>();
+        this.storageManager = new FileStorageManager();
+    }
+
+    public MatchHistory(FileStorageManager storageManager) {
+        this.allMatches = new ArrayList<>();
+        this.playerMatchHistory = new HashMap<>();
+        this.storageManager = storageManager != null ? storageManager : new FileStorageManager();
     }
 
     public void recordMatch(Match match) throws IllegalArgumentException {
@@ -27,6 +35,9 @@ public class MatchHistory {
                         playerMatchHistory.get(username).add(match);
                     }
                 }
+            }
+            if (storageManager != null) {
+                storageManager.saveMatch(match);
             }
         } catch (Exception e) {
             System.err.println("Error recording match: " + e.getMessage());
@@ -125,8 +136,40 @@ public class MatchHistory {
         try {
             allMatches.clear();
             playerMatchHistory.clear();
+            if (storageManager != null) {
+                storageManager.clearAllData();
+            }
         } catch (Exception e) {
             System.err.println("Error clearing history: " + e.getMessage());
+        }
+    }
+
+    public void loadHistoryFromStorage() {
+        try {
+            if (storageManager != null) {
+                List<Match> storedMatches = storageManager.loadAllMatches();
+                if (storedMatches != null) {
+                    allMatches.clear();
+                    playerMatchHistory.clear();
+                    for (Match match : storedMatches) {
+                        if (match != null) {
+                            allMatches.add(match);
+                            List<Player> players = match.getPlayers();
+                            if (players != null) {
+                                for (Player player : players) {
+                                    if (player != null) {
+                                        String username = player.getUsername();
+                                        playerMatchHistory.putIfAbsent(username, new ArrayList<>());
+                                        playerMatchHistory.get(username).add(match);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading history from storage: " + e.getMessage());
         }
     }
 

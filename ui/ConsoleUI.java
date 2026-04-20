@@ -3,6 +3,7 @@ package ui;
 import model.*;
 import service.*;
 import config.MatchmakingConfig;
+import repository.*;
 import java.util.Scanner;
 import java.util.List;
 import java.util.ArrayList;
@@ -13,22 +14,26 @@ public class ConsoleUI {
     private MatchMakingEngine matchmakingEngine;
     private MatchQueue matchQueue;
     private Player currentPlayer;
+    private FileStorageManager fileStorageManager;
+    private MatchHistory matchHistory;
 
     public ConsoleUI() {
         this.scanner = new Scanner(System.in);
+        this.fileStorageManager = new FileStorageManager();
         this.playerManager = new PlayerManager();
+        this.matchHistory = new MatchHistory(fileStorageManager);
         
-        // Create queues for each game mode
         MatchQueue rankedQueue = new MatchQueue("Ranked");
         MatchQueue casualQueue = new MatchQueue("Casual");
         MatchQueue tournamentQueue = new MatchQueue("Tournament");
         
-        // Create config
         MatchmakingConfig config = new MatchmakingConfig(false, false);
         
         this.matchmakingEngine = new MatchMakingEngine(rankedQueue, casualQueue, tournamentQueue, config, playerManager);
-        this.matchQueue = casualQueue; // Default to casual queue
+        this.matchQueue = casualQueue;
         this.currentPlayer = null;
+        
+        matchHistory.loadHistoryFromStorage();
     }
 
     public void start() throws InterruptedException {
@@ -133,6 +138,7 @@ public class ConsoleUI {
 
         if (playerManager.registerPlayer(username, password, region, language)) {
             currentPlayer = playerManager.getPlayer(username);
+            fileStorageManager.savePlayer(currentPlayer);
             System.out.println("Registration successful!");
         } else {
             System.out.println("Registration failed!");
@@ -213,7 +219,22 @@ public class ConsoleUI {
 
     private void viewMatchHistory() {
         System.out.println("\n=== Match History ===");
-        System.out.println("No match history available yet.");
+        List<Match> history = matchHistory.getPlayerMatchHistory(currentPlayer.getUsername());
+        
+        if (history == null || history.isEmpty()) {
+            System.out.println("No match history available yet.");
+        } else {
+            System.out.println("Total Matches: " + history.size());
+            System.out.println("Wins: " + matchHistory.getPlayerWinsCount(currentPlayer.getUsername()));
+            System.out.println("Losses: " + matchHistory.getPlayerLossesCount(currentPlayer.getUsername()));
+            System.out.println("Average Match Duration: " + String.format("%.2f", matchHistory.getAverageMatchDuration(currentPlayer.getUsername())) + " seconds");
+            
+            for (Match match : history) {
+                if (match != null) {
+                    System.out.println("  Match ID: " + match.getMatchId() + " | Mode: " + match.getMode() + " | Winner: " + (match.getWinnerId() != null ? match.getWinnerId() : "N/A"));
+                }
+            }
+        }
     }
 
     private void settings() {
@@ -233,27 +254,58 @@ public class ConsoleUI {
                 System.out.print("Enter new preferred mode: ");
                 String newMode = scanner.nextLine();
                 currentPlayer.setPreferredMode(newMode);
-                System.out.println("Preferred mode updated!");
+                fileStorageManager.updatePlayer(currentPlayer);
+                System.out.println("Preferred mode updated and saved!");
                 break;
             case 2:
                 System.out.println("Current region: " + currentPlayer.getRegion());
                 System.out.print("Enter new region: ");
                 String newRegion = scanner.nextLine();
-                System.out.println("Region updated!");
+                updatePlayerRegion(newRegion);
+                fileStorageManager.updatePlayer(currentPlayer);
+                System.out.println("Region updated and saved!");
                 break;
             case 3:
                 System.out.println("Current language: " + currentPlayer.getLanguage());
                 System.out.print("Enter new language: ");
                 String newLanguage = scanner.nextLine();
-                System.out.println("Language updated!");
+                updatePlayerLanguage(newLanguage);
+                fileStorageManager.updatePlayer(currentPlayer);
+                System.out.println("Language updated and saved!");
                 break;
             default:
                 System.out.println("Invalid option.");
         }
     }
 
+    private void updatePlayerRegion(String newRegion) {
+        try {
+            Player updatedPlayer = new Player(currentPlayer.getUsername(), "", newRegion, currentPlayer.getLanguage());
+            updatedPlayer = playerManager.getPlayer(currentPlayer.getUsername());
+            if (updatedPlayer != null) {
+                currentPlayer = updatedPlayer;
+            }
+        } catch (Exception e) {
+            System.err.println("Error updating region: " + e.getMessage());
+        }
+    }
+
+    private void updatePlayerLanguage(String newLanguage) {
+        try {
+            Player updatedPlayer = playerManager.getPlayer(currentPlayer.getUsername());
+            if (updatedPlayer != null) {
+                currentPlayer = updatedPlayer;
+            }
+        } catch (Exception e) {
+            System.err.println("Error updating language: " + e.getMessage());
+        }
+    }
+
     private void logout() {
-        System.out.println("Logging out...");
+        if (currentPlayer != null) {
+            fileStorageManager.updatePlayer(currentPlayer);
+            System.out.println("Logging out...");
+        }
         currentPlayer = null;
     }
 }
