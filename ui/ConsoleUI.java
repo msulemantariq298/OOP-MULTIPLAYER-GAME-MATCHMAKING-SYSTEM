@@ -2,6 +2,7 @@ package ui;
 
 import model.*;
 import service.*;
+import config.MatchmakingConfig;
 import java.util.Scanner;
 import java.util.List;
 import java.util.ArrayList;
@@ -9,15 +10,24 @@ import java.util.ArrayList;
 public class ConsoleUI {
     private Scanner scanner;
     private PlayerManager playerManager;
-    private MatchmakingEngine matchmakingEngine;
+    private MatchMakingEngine matchmakingEngine;
     private MatchQueue matchQueue;
     private Player currentPlayer;
 
     public ConsoleUI() {
         this.scanner = new Scanner(System.in);
         this.playerManager = new PlayerManager();
-        this.matchmakingEngine = new MatchmakingEngine();
-        this.matchQueue = new MatchQueue();
+        
+        // Create queues for each game mode
+        MatchQueue rankedQueue = new MatchQueue("Ranked");
+        MatchQueue casualQueue = new MatchQueue("Casual");
+        MatchQueue tournamentQueue = new MatchQueue("Tournament");
+        
+        // Create config
+        MatchmakingConfig config = new MatchmakingConfig(false, false);
+        
+        this.matchmakingEngine = new MatchMakingEngine(rankedQueue, casualQueue, tournamentQueue, config, playerManager);
+        this.matchQueue = casualQueue; // Default to casual queue
         this.currentPlayer = null;
     }
 
@@ -61,7 +71,11 @@ public class ConsoleUI {
 
     private void showMainMenu() throws InterruptedException {
         System.out.println("\n=== Main Menu ===");
-        System.out.println("Welcome, " + currentPlayer.getUsername() + "!");
+        if (currentPlayer != null) {
+            System.out.println("Welcome, " + currentPlayer.getUsername() + "!");
+        } else {
+            System.out.println("Welcome!");
+        }
         System.out.println("1. Find Match");
         System.out.println("2. View Stats");
         System.out.println("3. View Match History");
@@ -99,8 +113,12 @@ public class ConsoleUI {
         System.out.print("Enter password: ");
         String password = scanner.nextLine();
 
-        currentPlayer = new Player(username, password, "US", "English");
-        System.out.println("Login successful!");
+        if (playerManager.loginPlayer(username, password)) {
+            currentPlayer = playerManager.getPlayer(username);
+            System.out.println("Login successful!");
+        } else {
+            System.out.println("Login failed!");
+        }
     }
 
     private void register() {
@@ -113,8 +131,12 @@ public class ConsoleUI {
         System.out.print("Enter language: ");
         String language = scanner.nextLine();
 
-        currentPlayer = new Player(username, password, region, language);
-        System.out.println("Registration successful!");
+        if (playerManager.registerPlayer(username, password, region, language)) {
+            currentPlayer = playerManager.getPlayer(username);
+            System.out.println("Registration successful!");
+        } else {
+            System.out.println("Registration failed!");
+        }
     }
 
     private void findMatch() throws InterruptedException {
