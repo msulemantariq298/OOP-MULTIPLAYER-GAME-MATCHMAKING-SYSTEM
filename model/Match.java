@@ -68,6 +68,10 @@ public class Match implements Serializable {
         return (endTime - startTime) / 1000;
     }
     
+    public void setEndTime(long endTime) {
+        this.endTime = endTime;
+    }
+    
     public String toString() {
         return "Match " + matchId + " - " + status;
     }

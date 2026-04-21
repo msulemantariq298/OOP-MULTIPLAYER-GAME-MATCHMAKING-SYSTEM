@@ -75,4 +75,8 @@ public class TournamentMode extends GameMode {
     public void advanceRound() {
         this.currentRound++;
     }
+    
+    public int getBracketSize() {
+        return bracketSize;
+    }
 }

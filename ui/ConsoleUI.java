@@ -18,12 +18,14 @@ public class ConsoleUI {
     private Player currentPlayer;
     private FileStorageManager fileStorageManager;
     private MatchHistory matchHistory;
+    private IReputationManager reputationManager;
 
     public ConsoleUI() {
         this.scanner = new Scanner(System.in);
         this.fileStorageManager = new FileStorageManager();
         this.playerManager = new PlayerManager(fileStorageManager);
         this.matchHistory = new MatchHistory(fileStorageManager);
+        this.reputationManager = new ReputationManager(30); // Minimum reputation score 30
         
         MatchQueue rankedQueue = new MatchQueue("Ranked");
         MatchQueue casualQueue = new MatchQueue("Casual");
@@ -157,7 +159,6 @@ public class ConsoleUI {
         System.out.println("1. Casual Mode");
         System.out.println("2. Ranked Mode");
         System.out.println("3. Tournament Mode");
-        System.out.print("Choose game mode: ");
 
         int modeChoice = InputValidator.getValidatedInt(scanner, "Choose game mode: ", 1, 3);
 
@@ -211,17 +212,44 @@ public class ConsoleUI {
         Match match = new Match(matchId, players, mode);
         match.start();
 
+        // Calculate match duration based on game mode (for display purposes only)
+        long matchDurationMs;
+        if (mode.getModeName().equals("Casual")) {
+            matchDurationMs = 10 * 60 * 1000; // 10 minutes in milliseconds
+        } else if (mode.getModeName().equals("Ranked")) {
+            matchDurationMs = 15 * 60 * 1000; // 15 minutes in milliseconds
+        } else if (mode instanceof TournamentMode) {
+            // Tournament duration depends on bracket size
+            TournamentMode tournamentMode = (TournamentMode) mode;
+            int bracketSize = tournamentMode.getBracketSize();
+            // Duration = 5 minutes * number of rounds (log2 of bracket size)
+            int rounds = (int) (Math.log(bracketSize) / Math.log(2));
+            matchDurationMs = rounds * 5 * 60 * 1000; // 5 minutes per round
+        } else {
+            matchDurationMs = 3000; // Default 3 seconds
+        }
+
+        // Simulate short delay for realism (3 seconds)
         Thread.sleep(3000);
 
         if (won) {
             System.out.println("Victory! You won the match!");
             currentPlayer.updateStats(true);
-            match.end(currentPlayer.getUsername()); // Current player wins
+            match.end(currentPlayer.getUsername());
         } else {
             System.out.println("Defeat! Better luck next time!");
             currentPlayer.updateStats(false);
-            match.end(aiOpponent.getUsername()); // AI wins
+            match.end(aiOpponent.getUsername());
         }
+
+        // Update rating only for Ranked and Tournament modes
+        if (mode.isRatingEnabled()) {
+            currentPlayer.getRating().updateRating(won, aiOpponent.getRating());
+            System.out.println("Rating updated: " + String.format("%.3f", currentPlayer.getRating().getValue()));
+        }
+
+        // Set the endTime to reflect the calculated duration for accurate display
+        match.setEndTime(match.getStartTime() + matchDurationMs);
 
         // Record the match in history
         try {
@@ -232,18 +260,58 @@ public class ConsoleUI {
         }
 
         System.out.println("Match completed.");
+
+        // Ask if user wants to report opponent
+        System.out.print("\nWould you like to report your opponent? (1=Yes, 2=No): ");
+        int reportChoice = InputValidator.getValidatedInt(scanner, "", 1, 2);
+        
+        if (reportChoice == 1) {
+            System.out.print("Enter reason for report: ");
+            String reason = scanner.nextLine().trim();
+            if (!reason.isEmpty()) {
+                reputationManager.reportPlayer(aiOpponent, currentPlayer, reason);
+                System.out.println("Report filed successfully.");
+            } else {
+                System.out.println("Report cancelled - reason cannot be empty.");
+            }
+        }
+
+        // Random chance for opponent to report player (20% chance)
+        if (Math.random() < 0.2) {
+            String[] aiReasons = {
+                "Toxic behavior",
+                "Unsportsmanlike conduct",
+                "Intentional feeding",
+                "Verbal abuse",
+                "Cheating suspected",
+                "AFK during match",
+                "Team killing",
+                "Exploiting glitches"
+            };
+            String randomReason = aiReasons[(int)(Math.random() * aiReasons.length)];
+            
+            System.out.println("\n*** OPPONENT REPORTED YOU ***");
+            System.out.println("Your opponent reported you for: " + randomReason);
+            reputationManager.reportPlayer(currentPlayer, aiOpponent, randomReason);
+        }
     }
 
     private void viewStats() {
         System.out.println("\n=== Player Statistics ===");
         System.out.println("Username: " + currentPlayer.getUsername());
-        System.out.println("Rating: " + currentPlayer.getRating());
-        System.out.println("Games Played: " + currentPlayer.getGamesPlayed());
-        System.out.println("Wins: " + currentPlayer.getWins());
-        System.out.println("Losses: " + currentPlayer.getLosses());
+        System.out.println("Rating: " + String.format("%.3f", currentPlayer.getRating().getValue()));
+        
+        // Use match history as single source of truth for stats
+        int gamesPlayed = matchHistory.getPlayerMatchCount(currentPlayer.getUsername());
+        int wins = matchHistory.getPlayerWinsCount(currentPlayer.getUsername());
+        int losses = matchHistory.getPlayerLossesCount(currentPlayer.getUsername());
+        
+        System.out.println("Games Played: " + gamesPlayed);
+        System.out.println("Wins: " + wins);
+        System.out.println("Losses: " + losses);
         System.out.println("Win Rate: " +
-            (currentPlayer.getGamesPlayed() > 0 ?
-                (currentPlayer.getWins() * 100.0 / currentPlayer.getGamesPlayed()) + "%" : "N/A"));
+            String.format("%.3f%%", gamesPlayed > 0 ?
+                (wins * 100.0 / gamesPlayed) : 0.0));
         System.out.println("Reputation Score: " + currentPlayer.getReputationScore());
         System.out.println("Region: " + currentPlayer.getRegion());
         System.out.println("Preferred Mode: " + currentPlayer.getPreferredMode());
@@ -259,11 +327,12 @@ public class ConsoleUI {
             System.out.println("Total Matches: " + history.size());
             System.out.println("Wins: " + matchHistory.getPlayerWinsCount(currentPlayer.getUsername()));
             System.out.println("Losses: " + matchHistory.getPlayerLossesCount(currentPlayer.getUsername()));
-            System.out.println("Average Match Duration: " + String.format("%.2f", matchHistory.getAverageMatchDuration(currentPlayer.getUsername())) + " seconds");
+            System.out.println("Average Match Duration: " + String.format("%.2f", matchHistory.getAverageMatchDuration(currentPlayer.getUsername()) / 60.0) + " minutes");
             
             for (Match match : history) {
                 if (match != null) {
-                    System.out.println("  Match ID: " + match.getMatchId() + " | Mode: " + match.getMode() + " | Winner: " + (match.getWinnerId() != null ? match.getWinnerId() : "N/A"));
+                    double durationMinutes = match.getDurationSeconds() / 60.0;
+                    System.out.println("  Match ID: " + match.getMatchId() + " | Mode: " + match.getMode() + " | Duration: " + String.format("%.2f", durationMinutes) + " min | Winner: " + (match.getWinnerId() != null ? match.getWinnerId() : "N/A"));
                 }
             }
         }
