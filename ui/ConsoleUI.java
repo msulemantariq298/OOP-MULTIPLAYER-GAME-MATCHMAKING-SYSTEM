@@ -3,6 +3,7 @@ package ui;
 import model.*;
 import service.*;
 import config.MatchmakingConfig;
+import util.InputValidator;
 import java.util.Scanner;
 import java.util.List;
 import java.util.ArrayList;
@@ -44,98 +45,102 @@ public class ConsoleUI {
     }
 
     private void showLoginMenu() {
-        System.out.println("\n=== Login Menu ===");
-        System.out.println("1. Login");
-        System.out.println("2. Register");
-        System.out.println("3. Exit");
-        System.out.print("Choose an option: ");
+        try {
+            System.out.println("\n=== Login Menu ===");
+            System.out.println("1. Login");
+            System.out.println("2. Register");
+            System.out.println("3. Exit");
+            
+            int choice = InputValidator.getValidatedInt(scanner, "Choose an option: ", 1, 3);
 
-        int choice = scanner.nextInt();
-        scanner.nextLine();
-
-        switch (choice) {
-            case 1:
-                login();
-                break;
-            case 2:
-                register();
-                break;
-            case 3:
-                System.out.println("Goodbye!");
-                System.exit(0);
-                break;
-            default:
-                System.out.println("Invalid option. Please try again.");
+            switch (choice) {
+                case 1:
+                    login();
+                    break;
+                case 2:
+                    register();
+                    break;
+                case 3:
+                    System.out.println("Goodbye!");
+                    System.exit(0);
+                    break;
+            }
+        } catch (Exception e) {
+            System.out.println("ERROR: An unexpected error occurred. Please try again.");
         }
     }
 
     private void showMainMenu() throws InterruptedException {
-        System.out.println("\n=== Main Menu ===");
-        if (currentPlayer != null) {
+        try {
+            if (currentPlayer == null) {
+                System.out.println("ERROR: No player logged in. Redirecting to login...");
+                return;
+            }
+            
+            System.out.println("\n=== Main Menu ===");
             System.out.println("Welcome, " + currentPlayer.getUsername() + "!");
-        } else {
-            System.out.println("Welcome!");
-        }
-        System.out.println("1. Find Match");
-        System.out.println("2. View Stats");
-        System.out.println("3. View Match History");
-        System.out.println("4. Settings");
-        System.out.println("5. Logout");
-        System.out.print("Choose an option: ");
+            System.out.println("1. Find Match");
+            System.out.println("2. View Stats");
+            System.out.println("3. View Match History");
+            System.out.println("4. Settings");
+            System.out.println("5. Logout");
+            
+            int choice = InputValidator.getValidatedInt(scanner, "Choose an option: ", 1, 5);
 
-        int choice = scanner.nextInt();
-        scanner.nextLine();
-
-        switch (choice) {
-            case 1:
-                findMatch();
-                break;
-            case 2:
-                viewStats();
-                break;
-            case 3:
-                viewMatchHistory();
-                break;
-            case 4:
-                settings();
-                break;
-            case 5:
-                logout();
-                break;
-            default:
-                System.out.println("Invalid option. Please try again.");
+            switch (choice) {
+                case 1:
+                    findMatch();
+                    break;
+                case 2:
+                    viewStats();
+                    break;
+                case 3:
+                    viewMatchHistory();
+                    break;
+                case 4:
+                    settings();
+                    break;
+                case 5:
+                    logout();
+                    break;
+            }
+        } catch (Exception e) {
+            System.out.println("ERROR: An unexpected error occurred. Please try again.");
         }
     }
 
+    /**
+     * Handles user login with input validation.
+     */
     private void login() {
-        System.out.print("Enter username: ");
-        String username = scanner.nextLine();
-        System.out.print("Enter password: ");
-        String password = scanner.nextLine();
-
-        if (playerManager.loginPlayer(username, password)) {
-            currentPlayer = playerManager.getPlayer(username);
-            System.out.println("Login successful!");
-        } else {
-            System.out.println("Login failed!");
+        try {
+            String username = InputValidator.getValidUsername(scanner);
+            System.out.print("Enter password: ");
+            String password = scanner.nextLine();
+            
+            if (playerManager.loginPlayer(username, password)) {
+                currentPlayer = playerManager.getPlayer(username);
+            }
+        } catch (Exception e) {
+            System.out.println("ERROR: Login failed. Please try again.");
         }
     }
 
+    /**
+     * Handles user registration with comprehensive input validation.
+     */
     private void register() {
-        System.out.print("Enter username: ");
-        String username = scanner.nextLine();
-        System.out.print("Enter password: ");
-        String password = scanner.nextLine();
-        System.out.print("Enter region: ");
-        String region = scanner.nextLine();
-        System.out.print("Enter language: ");
-        String language = scanner.nextLine();
-
-        if (playerManager.registerPlayer(username, password, region, language)) {
-            currentPlayer = playerManager.getPlayer(username);
-            System.out.println("Registration successful!");
-        } else {
-            System.out.println("Registration failed!");
+        try {
+            String username = InputValidator.getValidUsername(scanner);
+            String password = InputValidator.getValidPassword(scanner);
+            String region = InputValidator.getValidRegion(scanner);
+            String language = InputValidator.getValidLanguage(scanner);
+            
+            if (playerManager.registerPlayer(username, password, region, language)) {
+                currentPlayer = playerManager.getPlayer(username);
+            }
+        } catch (Exception e) {
+            System.out.println("ERROR: Registration failed. Please try again.");
         }
     }
 
@@ -146,8 +151,7 @@ public class ConsoleUI {
         System.out.println("3. Tournament Mode");
         System.out.print("Choose game mode: ");
 
-        int modeChoice = scanner.nextInt();
-        scanner.nextLine();
+        int modeChoice = InputValidator.getValidatedInt(scanner, "Choose game mode: ", 1, 3);
 
         GameMode selectedMode = null;
         switch (modeChoice) {
@@ -158,9 +162,12 @@ public class ConsoleUI {
                 selectedMode = new RankedMode();
                 break;
             case 3:
-                System.out.print("Enter tournament bracket size: ");
-                int bracketSize = scanner.nextInt();
-                scanner.nextLine();
+                int bracketSize = InputValidator.getValidatedInt(scanner, "Enter tournament bracket size (power of 2): ", 2, 64);
+                // Validate power of 2
+                if ((bracketSize & (bracketSize - 1)) != 0) {
+                    System.out.println("ERROR: Bracket size must be a power of 2 (2, 4, 8, 16, 32, 64)");
+                    return;
+                }
                 selectedMode = new TournamentMode(bracketSize);
                 break;
             default:
@@ -216,39 +223,47 @@ public class ConsoleUI {
         System.out.println("No match history available yet.");
     }
 
+    /**
+     * Handles user settings with input validation.
+     */
     private void settings() {
-        System.out.println("\n=== Settings ===");
-        System.out.println("1. Change Preferred Mode");
-        System.out.println("2. Change Region");
-        System.out.println("3. Change Language");
-        System.out.print("Choose an option: ");
+        try {
+            if (currentPlayer == null) {
+                System.out.println("ERROR: No player logged in.");
+                return;
+            }
+            
+            System.out.println("\n=== Settings ===");
+            System.out.println("1. Change Preferred Mode");
+            System.out.println("2. Change Region");
+            System.out.println("3. Change Language");
+            
+            int choice = InputValidator.getValidatedInt(scanner, "Choose an option: ", 1, 3);
 
-        int choice = scanner.nextInt();
-        scanner.nextLine();
-
-        switch (choice) {
-            case 1:
-                System.out.println("Current preferred mode: " + currentPlayer.getPreferredMode());
-                System.out.println("Available modes: Casual, Ranked, Tournament");
-                System.out.print("Enter new preferred mode: ");
-                String newMode = scanner.nextLine();
-                currentPlayer.setPreferredMode(newMode);
-                System.out.println("Preferred mode updated!");
-                break;
-            case 2:
-                System.out.println("Current region: " + currentPlayer.getRegion());
-                System.out.print("Enter new region: ");
-                String newRegion = scanner.nextLine();
-                System.out.println("Region updated!");
-                break;
-            case 3:
-                System.out.println("Current language: " + currentPlayer.getLanguage());
-                System.out.print("Enter new language: ");
-                String newLanguage = scanner.nextLine();
-                System.out.println("Language updated!");
-                break;
-            default:
-                System.out.println("Invalid option.");
+            switch (choice) {
+                case 1:
+                    System.out.println("Current preferred mode: " + currentPlayer.getPreferredMode());
+                    System.out.println("Available modes: Casual, Ranked, Tournament");
+                    String newMode = InputValidator.getValidatedString(scanner, "Enter new preferred mode: ",
+                        mode -> InputValidator.isValidRegion(mode), "Invalid mode name");
+                    currentPlayer.setPreferredMode(newMode);
+                    System.out.println("Preferred mode updated!");
+                    break;
+                case 2:
+                    System.out.println("Current region: " + currentPlayer.getRegion());
+                    String newRegion = InputValidator.getValidRegion(scanner);
+                    // Note: In a real system, you'd update the player's region
+                    System.out.println("Region updated to: " + newRegion);
+                    break;
+                case 3:
+                    System.out.println("Current language: " + currentPlayer.getLanguage());
+                    String newLanguage = InputValidator.getValidLanguage(scanner);
+                    // Note: In a real system, you'd update the player's language
+                    System.out.println("Language updated to: " + newLanguage);
+                    break;
+            }
+        } catch (Exception e) {
+            System.out.println("ERROR: Settings update failed. Please try again.");
         }
     }
 

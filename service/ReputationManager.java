@@ -12,7 +12,7 @@ package service;
 
 import model.Player;
 
-public class ReputationManager {
+public class ReputationManager implements IReputationManager {
 
     // minimum score needed to play normally
     private int minimumReputationScore;

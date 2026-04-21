@@ -10,9 +10,11 @@
 
 package model;
 
+import util.PasswordHasher;
+
 public class Player {
     private String username;
-    private String passwordHash;
+    private String passwordHash; // Now actually stores hashed password
     private String region;
     private int wins;
     private int losses;
@@ -22,11 +24,27 @@ public class Player {
     private int reputationScore;
     private SkillRating rating;
 
+    /**
+     * Creates a new player with secure password hashing.
+     * 
+     * @param username The player's username (must not be null/empty)
+     * @param pwd The player's password (must be at least 8 characters)
+     * @param region The player's region
+     * @param language The player's preferred language
+     * @throws IllegalArgumentException if username is null/empty or password is too weak
+     */
     public Player(String username, String pwd, String region, String language) {
-        this.username = username;
-        this.passwordHash = pwd;
-        this.region = region;
-        this.language = language;
+        if (username == null || username.trim().isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be null or empty");
+        }
+        if (!PasswordHasher.isPasswordStrong(pwd)) {
+            throw new IllegalArgumentException("Password must be at least 8 characters with uppercase, lowercase, and digit");
+        }
+        
+        this.username = username.trim();
+        this.passwordHash = PasswordHasher.hashPassword(pwd);
+        this.region = region != null ? region.trim() : "Unknown";
+        this.language = language != null ? language.trim() : "English";
         this.wins = 0;
         this.losses = 0;
         this.gamesPlayed = 0;
@@ -56,6 +74,18 @@ public class Player {
         }
     }
 
+    public boolean verifyPassword(String password) {
+        return PasswordHasher.verifyPassword(password, this.passwordHash);
+    }
+
+    public boolean updatePassword(String newPassword) {
+        if (!PasswordHasher.isPasswordStrong(newPassword)) {
+            throw new IllegalArgumentException("Password must be at least 8 characters with uppercase, lowercase, and digit");
+        }
+        this.passwordHash = PasswordHasher.hashPassword(newPassword);
+        return true;
+    }
+
     public String getLanguage() {
         return language;
     }
@@ -83,8 +113,36 @@ public class Player {
     
     public void setPreferredMode(String mode) { this.preferredMode = mode; }
 
+    /**
+     * Returns a string representation of the player (excluding sensitive data).
+     * 
+     * @return Player summary string
+     */
     public String toString() {
-        return username + " - " + rating + " - " + region + " - " + language;
+        return String.format("Player[%s, Rating=%.0f, Region=%s, Language=%s, Wins=%d, Losses=%d, Reputation=%d]", 
+                username, rating.getValue(), region, language, wins, losses, reputationScore);
+    }
+    
+    /**
+     * Returns a detailed player profile.
+     * 
+     * @return Detailed player information
+     */
+    public String getProfile() {
+        return String.format("=== Player Profile ===\n" +
+                "Username: %s\n" +
+                "Region: %s\n" +
+                "Language: %s\n" +
+                "Rating: %.0f\n" +
+                "Games Played: %d\n" +
+                "Wins: %d\n" +
+                "Losses: %d\n" +
+                "Win Rate: %.1f%%\n" +
+                "Reputation: %d/100\n" +
+                "Preferred Mode: %s",
+                username, region, language, rating.getValue(), gamesPlayed, wins, losses,
+                gamesPlayed > 0 ? (wins * 100.0 / gamesPlayed) : 0.0,
+                reputationScore, preferredMode);
     }
 }
 

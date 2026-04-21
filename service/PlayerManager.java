@@ -10,23 +10,26 @@
 package service;
 
 import model.Player;
+import java.util.Map;
+import java.util.HashMap;
 
-public class PlayerManager {
+public class PlayerManager implements IPlayerManager {
 
-    // Simple arrays to store players and their passwords
-    private Player[] players;
-    private String[] passwords; // array parallel to "Player" array. players[0]'s password is always at passwords[0]
+    // HashMap for efficient O(1) player lookup and management
+    private Map<String, Player> players;
     private int playerCount;
 
     // The player who is currently logged in.
     private Player loggedInPlayer;
 
-    // Constructor - sets up empty storage for up to 100 players
+    /**
+     * Constructor - initializes storage for players with unlimited capacity.
+     * Uses HashMap for O(1) lookup performance.
+     */
     public PlayerManager() {
-        players = new Player[100];
-        passwords = new String[100];
-        playerCount = 0;
-        loggedInPlayer = null;
+        this.players = new HashMap<>();
+        this.playerCount = 0;
+        this.loggedInPlayer = null;
     }
 
     // this method registers a new player into the system
@@ -38,43 +41,46 @@ public class PlayerManager {
             return false;
         }
 
-        // Checking if username is already taken
+        // Check if player already exists
         if (playerExists(username)) {
             System.out.println("ERROR: Username '" + username + "' is already taken.");
             return false;
         }
 
-        // Add new player to the array
-        players[playerCount] = new Player(username, pwd, region, language);
-        passwords[playerCount] = pwd;
-        playerCount++;
+        // Add new player to the HashMaps
+        try {
+            Player newPlayer = new Player(username, pwd, region, language);
+            players.put(username, newPlayer);
+            // Password is already hashed in Player constructor, no need to store separately
+            playerCount++;
+        } catch (IllegalArgumentException e) {
+            System.out.println("ERROR: " + e.getMessage());
+            return false;
+        }
 
-        System.out.println("==>> Registration complete! Welcome, " + username+ "  <<==");
+        System.out.println("Registration complete! Welcome, " + username + "!");
         return true;
     }
 
     // Logs in a player by checking username and password
     public boolean loginPlayer(String username, String pwd) {
 
-        // Search for the player, continue with the code ONLY IF the user exists.
-        for (int i = 0; i < playerCount; i++) {
-            if (players[i].getUsername().equals(username)) {
-
-                // Found the player, now check password
-                if (passwords[i].equals(pwd)) {
-                    loggedInPlayer = players[i];
-                    System.out.println("Login Succesful! Welcome back, " + username + "!");
-                    return true;
-                } else {
-                    System.out.println("ERROR: Incorrect password for: " + username);
-                    return false;
-                }
-            }
+        // Check if player exists and verify password
+        Player player = players.get(username);
+        if (player == null) {
+            System.out.println("ERROR: No account found for: " + username);
+            return false;
         }
 
-        // Player not found
-        System.out.println("ERROR: No account found for: " + username);
-        return false;
+        // Verify password using secure hashing
+        if (player.verifyPassword(pwd)) {
+            loggedInPlayer = player;
+            System.out.println("Login Successful! Welcome back, " + username + "!");
+            return true;
+        } else {
+            System.out.println("ERROR: Incorrect password for: " + username);
+            return false;
+        }
     }
 
     // it logs out the currently logged in player
@@ -87,14 +93,14 @@ public class PlayerManager {
         loggedInPlayer = null;
     }
 
-    // this method returns a player by username, it returns null if player is not found
+    /**
+     * Returns a player by username using O(1) HashMap lookup.
+     * 
+     * @param username The username to search for
+     * @return Player object if found, null otherwise
+     */
     public Player getPlayer(String username) {
-        for (int i = 0; i < playerCount; i++) {
-            if (players[i].getUsername().equals(username)) {
-                return players[i];
-            }
-        }
-        return null;
+        return players.get(username);
     }
 
     // it returns the currently logged in player
@@ -102,14 +108,15 @@ public class PlayerManager {
         return loggedInPlayer;
     }
 
-    // Checking if a player with the given username exists
+    /**
+     * Checks if a player with the given username exists.
+     * Uses O(1) HashMap lookup for efficiency.
+     * 
+     * @param username The username to check
+     * @return true if player exists, false otherwise
+     */
     public boolean playerExists(String username) {
-        for (int i = 0; i < playerCount; i++) {
-            if (players[i].getUsername().equals(username)) {
-                return true;
-            }
-        }
-        return false;
+        return players.containsKey(username);
     }
 
     // Returning the total number of registered players
@@ -117,19 +124,26 @@ public class PlayerManager {
         return playerCount;
     }
 
-    // mehtod to print all registered players to the console
+    /**
+     * Method to print all registered players to the console.
+     * Uses StringBuilder for efficient string concatenation.
+     */
     public void listAllPlayers() {
         if (playerCount == 0) {
             System.out.println("INFO: No players registered yet.");
             return;
         }
 
-        System.out.println("\n|===================================================|");
-        System.out.println("|           ALL REGISTERED PLAYERS                  |");
-        System.out.println("|===================================================|");
-        for (int i = 0; i < playerCount; i++) {
-            System.out.println("  -> " + players[i].toString());
+        StringBuilder output = new StringBuilder();
+        output.append("\n|===================================================|\n");
+        output.append("|           ALL REGISTERED PLAYERS                  |\n");
+        output.append("|===================================================|\n");
+        
+        for (Player player : players.values()) {
+            output.append("  -> ").append(player.toString()).append("\n");
         }
-        System.out.println("<===================================================>\n");
+        
+        output.append("<===================================================>\n");
+        System.out.print(output.toString());
     }
 }
