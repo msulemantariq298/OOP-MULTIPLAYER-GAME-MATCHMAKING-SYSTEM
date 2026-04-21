@@ -111,7 +111,7 @@ public class MatchmakingConfig {
         if(queueTimeout > 0){
             this.queueTimeout = queueTimeout;
         } else {
-            System.out.println("[CONFIG] Queue timeout must be greator than 0");
+            System.out.println("[CONFIG] Queue timeout must be greater than 0");
         }
     }
     public void setBanDurationHours(int hours) {

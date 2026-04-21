@@ -12,7 +12,7 @@ import java.util.ArrayList;
 
 public class ConsoleUI {
     private Scanner scanner;
-    private PlayerManager playerManager;
+    private IPlayerManager playerManager;
     private MatchMakingEngine matchmakingEngine;
     private MatchQueue matchQueue;
     private Player currentPlayer;
@@ -22,7 +22,7 @@ public class ConsoleUI {
     public ConsoleUI() {
         this.scanner = new Scanner(System.in);
         this.fileStorageManager = new FileStorageManager();
-        this.playerManager = new PlayerManager();
+        this.playerManager = new PlayerManager(fileStorageManager);
         this.matchHistory = new MatchHistory(fileStorageManager);
         
         MatchQueue rankedQueue = new MatchQueue("Ranked");
@@ -121,8 +121,8 @@ public class ConsoleUI {
     private void login() {
         try {
             String username = InputValidator.getValidUsername(scanner);
-            System.out.print("Enter password: ");
-            String password = scanner.nextLine();
+            String password = InputValidator.getValidatedString(scanner, "Enter password: ",
+                pwd -> pwd != null && pwd.length() >= 8, "Password must be at least 8 characters");
             
             if (playerManager.loginPlayer(username, password)) {
                 currentPlayer = playerManager.getPlayer(username);
@@ -196,16 +196,39 @@ public class ConsoleUI {
         System.out.println("Mode: " + mode.getModeName());
         System.out.println("Playing against AI opponent...");
 
+        // Create a mock opponent player for match simulation
+        Player aiOpponent = new Player("AI_Opponent", "TempPass123!", "Global", "English");
+        aiOpponent.updateStats(false); // AI always loses for simplicity
+
         boolean won = Math.random() > 0.4;
+        String matchId = "MATCH_" + System.currentTimeMillis();
+
+        // Create match object
+        List<Player> players = new ArrayList<>();
+        players.add(currentPlayer);
+        players.add(aiOpponent);
+        
+        Match match = new Match(matchId, players, mode);
+        match.start();
 
         Thread.sleep(3000);
 
         if (won) {
             System.out.println("Victory! You won the match!");
             currentPlayer.updateStats(true);
+            match.end(currentPlayer.getUsername()); // Current player wins
         } else {
             System.out.println("Defeat! Better luck next time!");
             currentPlayer.updateStats(false);
+            match.end(aiOpponent.getUsername()); // AI wins
+        }
+
+        // Record the match in history
+        try {
+            matchHistory.recordMatch(match);
+            System.out.println("Match recorded in history.");
+        } catch (Exception e) {
+            System.err.println("Failed to record match: " + e.getMessage());
         }
 
         System.out.println("Match completed.");
@@ -263,74 +286,40 @@ public class ConsoleUI {
             
             int choice = InputValidator.getValidatedInt(scanner, "Choose an option: ", 1, 3);
 
-<<<<<<< HEAD
             switch (choice) {
                 case 1:
                     System.out.println("Current preferred mode: " + currentPlayer.getPreferredMode());
                     System.out.println("Available modes: Casual, Ranked, Tournament");
                     String newMode = InputValidator.getValidatedString(scanner, "Enter new preferred mode: ",
-                        mode -> InputValidator.isValidRegion(mode), "Invalid mode name");
+                        mode -> InputValidator.isValidGameMode(mode), "Invalid mode name (Casual, Ranked, Tournament)");
                     currentPlayer.setPreferredMode(newMode);
-                    System.out.println("Preferred mode updated!");
+                    fileStorageManager.updatePlayer(currentPlayer);
+                    System.out.println("Preferred mode updated and saved!");
                     break;
                 case 2:
                     System.out.println("Current region: " + currentPlayer.getRegion());
                     String newRegion = InputValidator.getValidRegion(scanner);
-                    // Note: In a real system, you'd update the player's region
-                    System.out.println("Region updated to: " + newRegion);
+                    updatePlayerRegion(newRegion);
+                    fileStorageManager.updatePlayer(currentPlayer);
+                    System.out.println("Region updated and saved!");
                     break;
                 case 3:
                     System.out.println("Current language: " + currentPlayer.getLanguage());
                     String newLanguage = InputValidator.getValidLanguage(scanner);
-                    // Note: In a real system, you'd update the player's language
-                    System.out.println("Language updated to: " + newLanguage);
+                    updatePlayerLanguage(newLanguage);
+                    fileStorageManager.updatePlayer(currentPlayer);
+                    System.out.println("Language updated and saved!");
                     break;
             }
         } catch (Exception e) {
             System.out.println("ERROR: Settings update failed. Please try again.");
-=======
-        int choice = scanner.nextInt();
-        scanner.nextLine();
-
-        switch (choice) {
-            case 1:
-                System.out.println("Current preferred mode: " + currentPlayer.getPreferredMode());
-                System.out.println("Available modes: Casual, Ranked, Tournament");
-                System.out.print("Enter new preferred mode: ");
-                String newMode = scanner.nextLine();
-                currentPlayer.setPreferredMode(newMode);
-                fileStorageManager.updatePlayer(currentPlayer);
-                System.out.println("Preferred mode updated and saved!");
-                break;
-            case 2:
-                System.out.println("Current region: " + currentPlayer.getRegion());
-                System.out.print("Enter new region: ");
-                String newRegion = scanner.nextLine();
-                updatePlayerRegion(newRegion);
-                fileStorageManager.updatePlayer(currentPlayer);
-                System.out.println("Region updated and saved!");
-                break;
-            case 3:
-                System.out.println("Current language: " + currentPlayer.getLanguage());
-                System.out.print("Enter new language: ");
-                String newLanguage = scanner.nextLine();
-                updatePlayerLanguage(newLanguage);
-                fileStorageManager.updatePlayer(currentPlayer);
-                System.out.println("Language updated and saved!");
-                break;
-            default:
-                System.out.println("Invalid option.");
->>>>>>> ba7c5d25cab112388d0c21e39f48db222251f0b7
         }
     }
 
     private void updatePlayerRegion(String newRegion) {
         try {
-            Player updatedPlayer = new Player(currentPlayer.getUsername(), "", newRegion, currentPlayer.getLanguage());
-            updatedPlayer = playerManager.getPlayer(currentPlayer.getUsername());
-            if (updatedPlayer != null) {
-                currentPlayer = updatedPlayer;
-            }
+            currentPlayer.setRegion(newRegion);
+            System.out.println("Region updated to: " + newRegion);
         } catch (Exception e) {
             System.err.println("Error updating region: " + e.getMessage());
         }
@@ -338,10 +327,8 @@ public class ConsoleUI {
 
     private void updatePlayerLanguage(String newLanguage) {
         try {
-            Player updatedPlayer = playerManager.getPlayer(currentPlayer.getUsername());
-            if (updatedPlayer != null) {
-                currentPlayer = updatedPlayer;
-            }
+            currentPlayer.setLanguage(newLanguage);
+            System.out.println("Language updated to: " + newLanguage);
         } catch (Exception e) {
             System.err.println("Error updating language: " + e.getMessage());
         }

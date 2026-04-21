@@ -10,8 +10,10 @@
 package service;
 
 import model.Player;
+import repository.FileStorageManager;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
 
 public class PlayerManager implements IPlayerManager {
 
@@ -22,14 +24,36 @@ public class PlayerManager implements IPlayerManager {
     // The player who is currently logged in.
     private Player loggedInPlayer;
 
+    private FileStorageManager fileStorageManager;
+
     /**
      * Constructor - initializes storage for players with unlimited capacity.
      * Uses HashMap for O(1) lookup performance.
+     * Loads existing players from file storage.
      */
-    public PlayerManager() {
+    public PlayerManager(FileStorageManager fileStorageManager) {
         this.players = new HashMap<>();
         this.playerCount = 0;
         this.loggedInPlayer = null;
+        this.fileStorageManager = fileStorageManager;
+        loadPlayersFromFile();
+    }
+
+    /**
+     * Loads all existing players from file storage into memory.
+     */
+    private void loadPlayersFromFile() {
+        if (fileStorageManager != null) {
+            List<Player> loadedPlayers = fileStorageManager.loadAllPlayers();
+            if (loadedPlayers != null) {
+                for (Player player : loadedPlayers) {
+                    if (player != null && !players.containsKey(player.getUsername())) {
+                        players.put(player.getUsername(), player);
+                        playerCount++;
+                    }
+                }
+            }
+        }
     }
 
     // this method registers a new player into the system

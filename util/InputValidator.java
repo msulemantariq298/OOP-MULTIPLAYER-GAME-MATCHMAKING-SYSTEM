@@ -72,6 +72,20 @@ public class InputValidator {
     }
     
     /**
+     * Validates a game mode name.
+     * 
+     * @param mode The game mode to validate
+     * @return true if valid, false otherwise
+     */
+    public static boolean isValidGameMode(String mode) {
+        if (mode == null || mode.trim().isEmpty()) {
+            return false;
+        }
+        String normalizedMode = mode.trim();
+        return normalizedMode.equals("Casual") || normalizedMode.equals("Ranked") || normalizedMode.equals("Tournament");
+    }
+    
+    /**
      * Validates that a number is within a specified range.
      * 
      * @param value The value to check

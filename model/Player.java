@@ -11,8 +11,9 @@
 package model;
 
 import util.PasswordHasher;
+import java.io.Serializable;
 
-public class Player {
+public class Player implements Serializable {
     private String username;
     private String passwordHash; // Now actually stores hashed password
     private String region;
@@ -112,6 +113,18 @@ public class Player {
     public String getPreferredMode() { return preferredMode; }
     
     public void setPreferredMode(String mode) { this.preferredMode = mode; }
+    
+    public void setRegion(String region) { 
+        if (region != null && !region.trim().isEmpty()) {
+            this.region = region.trim(); 
+        }
+    }
+    
+    public void setLanguage(String language) { 
+        if (language != null && !language.trim().isEmpty()) {
+            this.language = language.trim(); 
+        }
+    }
 
     /**
      * Returns a string representation of the player (excluding sensitive data).

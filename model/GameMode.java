@@ -10,7 +10,9 @@
 
 package model;
 
-public abstract class GameMode {
+import java.io.Serializable;
+
+public abstract class GameMode implements Serializable {
     protected String modeName;
     protected int minPlayers;
     protected int maxPlayers;

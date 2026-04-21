@@ -11,8 +11,9 @@
 package model;
 
 import java.util.List;
+import java.io.Serializable;
 
-public class Match {
+public class Match implements Serializable {
     private String matchId;
     private List<Player> players;
     private GameMode mode;

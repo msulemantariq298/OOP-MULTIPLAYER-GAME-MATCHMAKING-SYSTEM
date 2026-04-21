@@ -10,7 +10,9 @@
 
 package model;
 
-public class SkillRating {
+import java.io.Serializable;
+
+public class SkillRating implements Serializable {
     private double ratingValue;
     private double minRating;
     private double maxRating;

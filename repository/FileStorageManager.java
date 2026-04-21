@@ -45,9 +45,36 @@ public class FileStorageManager {
             return false;
         }
         try {
-            FileOutputStream fos = new FileOutputStream(playersFile, true);
+            // Load existing players and add the new one
+            List<Player> players = loadAllPlayers();
+            
+            // Check if player already exists, if so update instead of adding
+            boolean found = false;
+            for (int i = 0; i < players.size(); i++) {
+                if (players.get(i) != null && players.get(i).getUsername().equals(player.getUsername())) {
+                    players.set(i, player);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                players.add(player);
+            }
+            
+            // Save all players to the file (overwrite the file completely)
+            File file = new File(playersFile);
+            if (file.exists() && !file.delete()) {
+                System.err.println("Failed to delete existing players file");
+                return false;
+            }
+            
+            FileOutputStream fos = new FileOutputStream(playersFile);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(player);
+            for (Player p : players) {
+                if (p != null) {
+                    oos.writeObject(p);
+                }
+            }
             oos.close();
             fos.close();
             return true;
@@ -63,9 +90,24 @@ public class FileStorageManager {
             return false;
         }
         try {
-            FileOutputStream fos = new FileOutputStream(matchesFile, true);
+            // Load existing matches and add the new one
+            List<Match> matches = loadAllMatches();
+            matches.add(match);
+            
+            // Save all matches to the file (overwrite the file completely)
+            File file = new File(matchesFile);
+            if (file.exists() && !file.delete()) {
+                System.err.println("Failed to delete existing matches file");
+                return false;
+            }
+            
+            FileOutputStream fos = new FileOutputStream(matchesFile);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(match);
+            for (Match m : matches) {
+                if (m != null) {
+                    oos.writeObject(m);
+                }
+            }
             oos.close();
             fos.close();
             return true;

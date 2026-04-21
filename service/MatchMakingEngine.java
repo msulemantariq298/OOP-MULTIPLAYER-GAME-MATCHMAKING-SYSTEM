@@ -30,7 +30,7 @@ public class MatchMakingEngine {
     private MatchmakingConfig config;
 
     // PlayerManager — engine asks this to get full player details by username
-    private PlayerManager playerManager;
+    private IPlayerManager playerManager;
 
     // Controls the engine loop — true = running, false = stopped
     private boolean running;
@@ -44,7 +44,7 @@ public class MatchMakingEngine {
                              MatchQueue casualQueue,
                              MatchQueue tournamentQueue,
                              MatchmakingConfig config,
-                             PlayerManager playerManager) {
+                             IPlayerManager playerManager) {
 
         this.rankedQueue      = rankedQueue;
         this.casualQueue      = casualQueue;
