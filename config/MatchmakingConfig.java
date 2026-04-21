@@ -46,6 +46,7 @@ public class MatchmakingConfig {
     // Player passes their preferences, system defaults are hardcoded below
     // =====================================================================
 
+    // Initializes configuration with player preferences and system defaults
     public MatchmakingConfig(boolean isSameRegion, boolean isSameLanguage) {
 
         // Player preferences
@@ -87,9 +88,13 @@ public class MatchmakingConfig {
     // =====================================================================
 
 
+    // Sets same region preference
     public void setSameRegion(boolean sameRegion)     { this.isSameRegion = sameRegion; }
+
+    // Sets same language preference
     public void setSameLanguage(boolean sameLanguage) { this.isSameLanguage = sameLanguage; }
 
+    // Sets minimum reputation for ranked mode with validation
     public void setMinReputationRanked(int score) {
         // Reputation must be between 0 and 100
         if (score >= 0 && score <= 100) {
@@ -99,6 +104,7 @@ public class MatchmakingConfig {
         }
     }
 
+    // Sets minimum reputation for tournament mode with validation
     public void setMinReputationTournament(int score) {
         if (score >= 0 && score <= 100) {
             this.minReputationTournament = score;
@@ -107,6 +113,7 @@ public class MatchmakingConfig {
         }
     }
 
+    // Sets queue timeout with validation
     public void setQueueTimeout(int queueTimeout){
         if(queueTimeout > 0){
             this.queueTimeout = queueTimeout;
@@ -114,6 +121,8 @@ public class MatchmakingConfig {
             System.out.println("[CONFIG] Queue timeout must be greater than 0");
         }
     }
+
+    // Sets ban duration with validation
     public void setBanDurationHours(int hours) {
         if (hours > 0) {
             this.banDurationHours = hours;
